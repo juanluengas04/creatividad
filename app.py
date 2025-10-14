@@ -24,7 +24,7 @@ RETOS_BASE = [
 ]
 
 # -------------------------
-# FUNCIÓN PARA INICIALIZAR ESTADO
+# ESTADO INICIAL
 # -------------------------
 def init_state():
     if "jugador1" not in st.session_state:
@@ -34,15 +34,22 @@ def init_state():
         st.session_state.p2 = 0
         st.session_state.ronda = 1
         st.session_state.total_rondas = 5
+
         st.session_state.retos = RETOS_BASE.copy()
         st.session_state.retos_usados = set()
         st.session_state.reto_actual = None
+
         st.session_state.resp1 = ""
         st.session_state.resp2 = ""
+
         st.session_state.num_votantes = 1
         st.session_state.votos1 = 0
         st.session_state.votos2 = 0
+
         st.session_state.juego_terminado = False
+
+        # 🔧 Flag para evitar la excepción: reseteo diferido de widgets
+        st.session_state.reset_votos_pendiente = False
 
 init_state()
 
@@ -51,7 +58,6 @@ init_state()
 # -------------------------
 with st.sidebar:
     st.header("⚙️ Configuración")
-    # Usa key y evita value para prevenir “rebotes”
     st.number_input(
         "Número de rondas", min_value=1, max_value=20, step=1, format="%d",
         key="total_rondas"
@@ -80,6 +86,15 @@ with col_b:
 if not st.session_state.jugador1 or not st.session_state.jugador2:
     st.info("👉 Escribe los nombres de ambos jugadores para comenzar.")
     st.stop()
+
+# -------------------------
+# 🔧 RESETEO DIFERIDO DE VOTOS (antes de crear los widgets)
+# -------------------------
+if st.session_state.reset_votos_pendiente:
+    # Aquí SÍ es seguro modificar claves de widgets antes de crearlos en esta ejecución
+    st.session_state.votos1 = 0
+    st.session_state.votos2 = 0
+    st.session_state.reset_votos_pendiente = False
 
 # -------------------------
 # FUNCIÓN PARA ELEGIR RETO NUEVO
@@ -136,7 +151,7 @@ with c2:
     )
 
 # -------------------------
-# VOTACIÓN (✅ con keys, sin value)
+# VOTACIÓN
 # -------------------------
 st.write("### 🗳️ Votación del público")
 st.caption("Introduce cuántos votos obtuvo cada jugador (la suma debe coincidir con los votantes).")
@@ -165,20 +180,27 @@ else:
 # -------------------------
 # BOTONES DE ACCIÓN
 # -------------------------
-col_av1, col_av2, col_av3 = st.columns([1, 1, 2])
+col_av1, col_av2, _ = st.columns([1, 1, 2])
+
 with col_av1:
     if st.button("✅ Cerrar ronda", disabled=not avanzar_habilitado):
+        # Asignar punto
         if st.session_state.votos1 > st.session_state.votos2:
             st.session_state.p1 += 1
         elif st.session_state.votos2 > st.session_state.votos1:
             st.session_state.p2 += 1
 
+        # Avanzar
         st.session_state.ronda += 1
+
+        # Limpiar respuestas
         st.session_state.resp1 = ""
         st.session_state.resp2 = ""
-        st.session_state.votos1 = 0
-        st.session_state.votos2 = 0
 
+        # Marcar reseteo diferido de los widgets de voto (para la próxima ejecución)
+        st.session_state.reset_votos_pendiente = True
+
+        # Terminar o elegir nuevo reto
         if st.session_state.ronda > st.session_state.total_rondas:
             st.session_state.juego_terminado = True
         else:
