@@ -2,7 +2,7 @@ import streamlit as st
 import random
 
 # -------------------------
-# Configuración básica
+# CONFIGURACIÓN INICIAL
 # -------------------------
 st.set_page_config(page_title="Ideas al Vuelo", page_icon="💡")
 
@@ -10,7 +10,7 @@ st.title("💡 IDEAS AL VUELO")
 st.caption("Un juego para despertar tu creatividad — versión Streamlit")
 
 # -------------------------
-# Datos base
+# LISTA DE RETOS
 # -------------------------
 RETOS_BASE = [
     "Inventa un nuevo animal combinando dos existentes.",
@@ -24,7 +24,7 @@ RETOS_BASE = [
 ]
 
 # -------------------------
-# Estado inicial
+# FUNCIÓN PARA INICIALIZAR ESTADO
 # -------------------------
 def init_state():
     if "jugador1" not in st.session_state:
@@ -47,7 +47,7 @@ def init_state():
 init_state()
 
 # -------------------------
-# Sidebar (configuración)
+# SIDEBAR (CONFIGURACIÓN)
 # -------------------------
 with st.sidebar:
     st.header("⚙️ Configuración")
@@ -55,7 +55,7 @@ with st.sidebar:
         "Número de rondas", min_value=1, max_value=20, value=st.session_state.total_rondas, step=1
     )
     st.session_state.num_votantes = st.number_input(
-        "Votantes por ronda (público)", min_value=1, max_value=200, value=st.session_state.num_votantes, step=1
+        "Votantes por ronda", min_value=1, max_value=200, value=st.session_state.num_votantes, step=1
     )
     st.divider()
     if st.button("🔄 Reiniciar juego", type="secondary"):
@@ -63,9 +63,10 @@ with st.sidebar:
             del st.session_state[k]
         init_state()
         st.success("Juego reiniciado.")
+        st.rerun()
 
 # -------------------------
-# Captura de jugadores
+# CAPTURA DE JUGADORES
 # -------------------------
 col_a, col_b = st.columns(2)
 with col_a:
@@ -74,16 +75,15 @@ with col_b:
     st.session_state.jugador2 = st.text_input("Nombre del jugador 2", value=st.session_state.jugador2)
 
 if not st.session_state.jugador1 or not st.session_state.jugador2:
-    st.info("Escribe los nombres de ambos jugadores para comenzar.")
+    st.info("👉 Escribe los nombres de ambos jugadores para comenzar.")
     st.stop()
 
 # -------------------------
-# Helper: seleccionar reto sin repetir
+# FUNCIÓN PARA ELEGIR RETO NUEVO
 # -------------------------
 def escoger_reto():
     disponibles = [r for i, r in enumerate(st.session_state.retos) if i not in st.session_state.retos_usados]
     if not disponibles:
-        # Si se acaban, se reinicia la bolsa (evita quedarse sin reto)
         st.session_state.retos_usados = set()
         disponibles = st.session_state.retos.copy()
     reto = random.choice(disponibles)
@@ -92,13 +92,13 @@ def escoger_reto():
     return reto
 
 # -------------------------
-# Reto actual
+# DEFINIR RETO ACTUAL
 # -------------------------
 if st.session_state.reto_actual is None and not st.session_state.juego_terminado:
     st.session_state.reto_actual = escoger_reto()
 
 # -------------------------
-# Cabecera de ronda y marcador
+# ENCABEZADO Y MARCADOR
 # -------------------------
 left, right = st.columns([2, 1])
 with left:
@@ -107,11 +107,11 @@ with right:
     st.metric(st.session_state.jugador1, st.session_state.p1)
     st.metric(st.session_state.jugador2, st.session_state.p2)
 
-st.write("### 🎯 Reto")
+st.write("### 🎯 Reto creativo")
 st.info(st.session_state.reto_actual)
 
 # -------------------------
-# Respuestas
+# RESPUESTAS
 # -------------------------
 st.write("### ✍️ Respuestas")
 c1, c2 = st.columns(2)
@@ -133,10 +133,11 @@ with c2:
     )
 
 # -------------------------
-# Votación
+# VOTACIÓN
 # -------------------------
 st.write("### 🗳️ Votación del público")
-st.caption("Ajusta cuántos votos recibió cada jugador (la suma debe coincidir con la cantidad de votantes).")
+st.caption("Introduce cuántos votos obtuvo cada jugador (la suma debe coincidir con los votantes).")
+
 vc1, vc2 = st.columns(2)
 with vc1:
     st.session_state.votos1 = st.number_input(
@@ -157,22 +158,16 @@ else:
     avanzar_habilitado = True
 
 # -------------------------
-# Avanzar ronda
+# BOTONES DE ACCIÓN
 # -------------------------
 col_av1, col_av2, col_av3 = st.columns([1, 1, 2])
 with col_av1:
     if st.button("✅ Cerrar ronda", disabled=not avanzar_habilitado):
-        # Asignar punto
         if st.session_state.votos1 > st.session_state.votos2:
             st.session_state.p1 += 1
-            st.success(f"🏆 {st.session_state.jugador1} gana la ronda")
         elif st.session_state.votos2 > st.session_state.votos1:
             st.session_state.p2 += 1
-            st.success(f"🏆 {st.session_state.jugador2} gana la ronda")
-        else:
-            st.info("🤝 ¡Empate en la ronda!")
 
-        # Pasar a la siguiente ronda o terminar
         st.session_state.ronda += 1
         st.session_state.resp1 = ""
         st.session_state.resp2 = ""
@@ -184,16 +179,18 @@ with col_av1:
         else:
             st.session_state.reto_actual = escoger_reto()
 
+        st.rerun()
+
 with col_av2:
     if st.button("🎲 Cambiar reto (misma ronda)"):
         st.session_state.reto_actual = escoger_reto()
-        st.info("Se cambió el reto para esta misma ronda.")
+        st.rerun()
 
 # -------------------------
-# Resultados finales
+# RESULTADOS FINALES
 # -------------------------
 st.divider()
-st.write("## 📊 Resultados")
+st.write("## 📊 Resultados actuales")
 st.write(f"**{st.session_state.jugador1}:** {st.session_state.p1} puntos")
 st.write(f"**{st.session_state.jugador2}:** {st.session_state.p2} puntos")
 
