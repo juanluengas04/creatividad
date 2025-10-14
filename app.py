@@ -51,11 +51,14 @@ init_state()
 # -------------------------
 with st.sidebar:
     st.header("⚙️ Configuración")
-    st.session_state.total_rondas = st.number_input(
-        "Número de rondas", min_value=1, max_value=20, value=st.session_state.total_rondas, step=1
+    # Usa key y evita value para prevenir “rebotes”
+    st.number_input(
+        "Número de rondas", min_value=1, max_value=20, step=1, format="%d",
+        key="total_rondas"
     )
-    st.session_state.num_votantes = st.number_input(
-        "Votantes por ronda", min_value=1, max_value=200, value=st.session_state.num_votantes, step=1
+    st.number_input(
+        "Votantes por ronda", min_value=1, max_value=200, step=1, format="%d",
+        key="num_votantes"
     )
     st.divider()
     if st.button("🔄 Reiniciar juego", type="secondary"):
@@ -133,21 +136,23 @@ with c2:
     )
 
 # -------------------------
-# VOTACIÓN
+# VOTACIÓN (✅ con keys, sin value)
 # -------------------------
 st.write("### 🗳️ Votación del público")
 st.caption("Introduce cuántos votos obtuvo cada jugador (la suma debe coincidir con los votantes).")
 
 vc1, vc2 = st.columns(2)
 with vc1:
-    st.session_state.votos1 = st.number_input(
+    st.number_input(
         f"Votos para {st.session_state.jugador1}",
-        min_value=0, max_value=st.session_state.num_votantes, value=st.session_state.votos1, step=1
+        min_value=0, max_value=st.session_state.num_votantes, step=1, format="%d",
+        key="votos1"
     )
 with vc2:
-    st.session_state.votos2 = st.number_input(
+    st.number_input(
         f"Votos para {st.session_state.jugador2}",
-        min_value=0, max_value=st.session_state.num_votantes, value=st.session_state.votos2, step=1
+        min_value=0, max_value=st.session_state.num_votantes, step=1, format="%d",
+        key="votos2"
     )
 
 suma = st.session_state.votos1 + st.session_state.votos2
